@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\Concerne;
+use App\Entity\CommandeProduit;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Concerne>
+ * @extends ServiceEntityRepository<CommandeProduit>
  */
-class ConcerneRepository extends ServiceEntityRepository
+class CommandeProduitRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Concerne::class);
+        parent::__construct($registry, CommandeProduit::class);
     }
 
     //    /**
-    //     * @return Concerne[] Returns an array of Concerne objects
+    //     * @return CommandeProduit[] Returns an array of CommandeProduit objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ConcerneRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Concerne
+    //    public function findOneBySomeField($value): ?CommandeProduit
     //    {
     //        return $this->createQueryBuilder('c')
     //            ->andWhere('c.exampleField = :val')

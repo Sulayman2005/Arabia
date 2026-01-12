@@ -2,28 +2,43 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PaiementRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PaiementRepository::class)]
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['paiement:read']]
+)]
 class Paiement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['paiement:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30)]
+    #[Groups(['paiement:read'])]
     private ?string $moyenPaiement = null;
 
     #[ORM\Column(length: 30)]
+    #[Groups(['paiement:read'])]
     private ?string $statut = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['paiement:read'])]
     private ?\DateTime $datePaiement = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    // Paiement appartient à UNE commande (et une commande a UN paiement)
+    #[ORM\OneToOne(inversedBy: 'paiement', targetEntity: Commande::class, cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['paiement:read'])]
     private ?Commande $commande = null;
 
     public function getId(): ?int
@@ -39,7 +54,6 @@ class Paiement
     public function setMoyenPaiement(string $moyenPaiement): static
     {
         $this->moyenPaiement = $moyenPaiement;
-
         return $this;
     }
 
@@ -51,7 +65,6 @@ class Paiement
     public function setStatut(string $statut): static
     {
         $this->statut = $statut;
-
         return $this;
     }
 
@@ -63,7 +76,6 @@ class Paiement
     public function setDatePaiement(\DateTime $datePaiement): static
     {
         $this->datePaiement = $datePaiement;
-
         return $this;
     }
 
@@ -75,7 +87,6 @@ class Paiement
     public function setCommande(?Commande $commande): static
     {
         $this->commande = $commande;
-
         return $this;
     }
 }

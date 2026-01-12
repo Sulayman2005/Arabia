@@ -14,4 +14,15 @@ class AppFixtures extends Fixture
 
         $manager->flush();
     }
+
+    public function getDependencies(): array
+    {
+        return [
+            UtilisateurFixtures::class,
+            CategorieFixtures::class,
+            ProduitFixtures::class,
+            CommandeFixtures::class,
+            CommandeProduitFixtures::class,
+        ];
+    }
 }

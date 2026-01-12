@@ -2,50 +2,87 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\ProduitRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Patch(),
+        new Delete(),
+    ],
+    normalizationContext: ['groups' => ['produit:read']],
+    denormalizationContext: ['groups' => ['produit:write']]
+)]
 class Produit
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['produit:read', 'categorie:read', 'commandeProduit:read', 'favori:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['produit:read', 'produit:write', 'categorie:read', 'favori:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['produit:read', 'produit:write'])]
     private ?string $description = null;
 
+    // Je garde scale: 0 comme chez toi (prix entier). Si tu veux centimes -> scale: 2
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
+    #[Groups(['produit:read', 'produit:write'])]
     private ?string $prix = null;
 
     #[ORM\Column]
+    #[Groups(['produit:read', 'produit:write'])]
     private ?int $stock = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['produit:read', 'produit:write'])]
     private ?string $image = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['produit:read', 'produit:write'])]
     private ?\DateTime $dateAjout = null;
 
-    #[ORM\ManyToOne(inversedBy: 'no')]
-    private ?Categorie $catgeorie = null;
+    #[ORM\ManyToOne(inversedBy: 'produits')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['produit:read', 'produit:write'])]
+    private ?Categorie $categorie = null;
 
     /**
-     * @var Collection<int, Concerne>
+     * @var Collection<int, CommandeProduit>
      */
-    #[ORM\OneToMany(targetEntity: Concerne::class, mappedBy: 'produit')]
-    private Collection $concernes;
+    #[ORM\OneToMany(mappedBy: 'produit', targetEntity: CommandeProduit::class, orphanRemoval: true)]
+    private Collection $commandeProduits;
+
+    /**
+     * @var Collection<int, Favori>
+     */
+    #[ORM\OneToMany(mappedBy: 'produit', targetEntity: Favori::class, orphanRemoval: true)]
+    private Collection $favoris;
 
     public function __construct()
     {
-        $this->concernes = new ArrayCollection();
+        $this->commandeProduits = new ArrayCollection();
+        $this->favoris = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,7 +98,6 @@ class Produit
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -73,7 +109,6 @@ class Produit
     public function setDescription(string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -85,7 +120,6 @@ class Produit
     public function setPrix(string $prix): static
     {
         $this->prix = $prix;
-
         return $this;
     }
 
@@ -97,7 +131,6 @@ class Produit
     public function setStock(int $stock): static
     {
         $this->stock = $stock;
-
         return $this;
     }
 
@@ -109,7 +142,6 @@ class Produit
     public function setImage(string $image): static
     {
         $this->image = $image;
-
         return $this;
     }
 
@@ -121,46 +153,72 @@ class Produit
     public function setDateAjout(\DateTime $dateAjout): static
     {
         $this->dateAjout = $dateAjout;
-
         return $this;
     }
 
-    public function getCatgeorie(): ?Categorie
+    public function getCategorie(): ?Categorie
     {
-        return $this->catgeorie;
+        return $this->categorie;
     }
 
-    public function setCatgeorie(?Categorie $catgeorie): static
+    public function setCategorie(?Categorie $categorie): static
     {
-        $this->catgeorie = $catgeorie;
-
+        $this->categorie = $categorie;
         return $this;
     }
 
     /**
-     * @return Collection<int, Concerne>
+     * @return Collection<int, CommandeProduit>
      */
-    public function getConcernes(): Collection
+    public function getCommandeProduits(): Collection
     {
-        return $this->concernes;
+        return $this->commandeProduits;
     }
 
-    public function addConcerne(Concerne $concerne): static
+    public function addCommandeProduit(CommandeProduit $commandeProduit): static
     {
-        if (!$this->concernes->contains($concerne)) {
-            $this->concernes->add($concerne);
-            $concerne->setProduit($this);
+        if (!$this->commandeProduits->contains($commandeProduit)) {
+            $this->commandeProduits->add($commandeProduit);
+            $commandeProduit->setProduit($this);
         }
 
         return $this;
     }
 
-    public function removeConcerne(Concerne $concerne): static
+    public function removeCommandeProduit(CommandeProduit $commandeProduit): static
     {
-        if ($this->concernes->removeElement($concerne)) {
-            // set the owning side to null (unless already changed)
-            if ($concerne->getProduit() === $this) {
-                $concerne->setProduit(null);
+        if ($this->commandeProduits->removeElement($commandeProduit)) {
+            if ($commandeProduit->getProduit() === $this) {
+                $commandeProduit->setProduit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Favori>
+     */
+    public function getFavoris(): Collection
+    {
+        return $this->favoris;
+    }
+
+    public function addFavori(Favori $favori): static
+    {
+        if (!$this->favoris->contains($favori)) {
+            $this->favoris->add($favori);
+            $favori->setProduit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFavori(Favori $favori): static
+    {
+        if ($this->favoris->removeElement($favori)) {
+            if ($favori->getProduit() === $this) {
+                $favori->setProduit(null);
             }
         }
 

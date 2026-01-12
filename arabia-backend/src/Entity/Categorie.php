@@ -2,35 +2,59 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\CategorieRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Patch(),
+        new Delete(),
+    ],
+    normalizationContext: ['groups' => ['categorie:read']],
+    denormalizationContext: ['groups' => ['categorie:write']]
+)]
 class Categorie
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['categorie:read', 'produit:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['categorie:read', 'categorie:write', 'produit:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['categorie:read', 'categorie:write'])]
     private ?string $description = null;
 
     /**
      * @var Collection<int, Produit>
      */
-    #[ORM\OneToMany(targetEntity: Produit::class, mappedBy: 'catgeorie')]
-    private Collection $no;
+    #[ORM\OneToMany(targetEntity: Produit::class, mappedBy: 'categorie')]
+    #[Groups(['categorie:read'])]
+    private Collection $produits;
 
     public function __construct()
     {
-        $this->no = new ArrayCollection();
+        $this->produits = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -46,7 +70,6 @@ class Categorie
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -58,34 +81,32 @@ class Categorie
     public function setDescription(string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
     /**
      * @return Collection<int, Produit>
      */
-    public function getNo(): Collection
+    public function getProduits(): Collection
     {
-        return $this->no;
+        return $this->produits;
     }
 
-    public function addNo(Produit $no): static
+    public function addProduit(Produit $produit): static
     {
-        if (!$this->no->contains($no)) {
-            $this->no->add($no);
-            $no->setCatgeorie($this);
+        if (!$this->produits->contains($produit)) {
+            $this->produits->add($produit);
+            $produit->setCategorie($this);
         }
 
         return $this;
     }
 
-    public function removeNo(Produit $no): static
+    public function removeProduit(Produit $produit): static
     {
-        if ($this->no->removeElement($no)) {
-            // set the owning side to null (unless already changed)
-            if ($no->getCatgeorie() === $this) {
-                $no->setCatgeorie(null);
+        if ($this->produits->removeElement($produit)) {
+            if ($produit->getCategorie() === $this) {
+                $produit->setCategorie(null);
             }
         }
 
