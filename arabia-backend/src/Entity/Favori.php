@@ -10,6 +10,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 #[ORM\Entity(repositoryClass: FavoriRepository::class)]
 #[ApiResource(
     operations: [new Get(), new GetCollection()],
@@ -25,16 +27,19 @@ class Favori
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['favori:read'])]
+    #[Assert\NotNull(message: "La date d'ajout est obligatoire.")]
     private ?\DateTime $dateAjout = null;
 
     #[ORM\ManyToOne(inversedBy: 'favoris')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['favori:read'])]
+    #[Assert\NotNull(message: "Le favori doit être lié à un utilisateur.")]
     private ?Utilisateur $utilisateur = null;
 
     #[ORM\ManyToOne(inversedBy: 'favoris')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['favori:read'])]
+    #[Assert\NotNull(message: "Le favori doit être lié à un produit.")]
     private ?Produit $produit = null;
 
     public function getId(): ?int

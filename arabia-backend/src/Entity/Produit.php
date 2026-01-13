@@ -16,6 +16,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
 #[ApiResource(
     operations: [
@@ -39,15 +41,20 @@ class Produit
 
     #[ORM\Column(length: 100)]
     #[Groups(['produit:read', 'produit:write', 'categorie:read', 'favori:read'])]
+    #[Assert\NotBlank(message: "Le nom du produit est obligatoire.")]
+    #[Assert\Length(min: 2, max: 100)]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(['produit:read', 'produit:write'])]
+    #[Assert\NotBlank(message: "La description est obligatoire.")]
+    #[Assert\Length(min: 10, minMessage: "La description doit faire au moins {{ limit }} caractères.")]
     private ?string $description = null;
 
     // Je garde scale: 0 comme chez toi (prix entier). Si tu veux centimes -> scale: 2
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
     #[Groups(['produit:read', 'produit:write'])]
+    #[Assert\NotBlank(message: "Le prix est obligatoire.")]
     private ?string $prix = null;
 
     #[ORM\Column]
@@ -56,10 +63,13 @@ class Produit
 
     #[ORM\Column(length: 255)]
     #[Groups(['produit:read', 'produit:write'])]
+    #[Assert\NotBlank(message: "L'image est obligatoire.")]
+    #[Assert\Length(max: 255)]
     private ?string $image = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['produit:read', 'produit:write'])]
+    #[Assert\NotNull(message: "La date d'ajout est obligatoire.")]
     private ?\DateTime $dateAjout = null;
 
     #[ORM\ManyToOne(inversedBy: 'produits')]

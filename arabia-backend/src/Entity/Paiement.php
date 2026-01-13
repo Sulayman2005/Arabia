@@ -10,6 +10,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 #[ORM\Entity(repositoryClass: PaiementRepository::class)]
 #[ApiResource(
     operations: [new Get(), new GetCollection()],
@@ -25,6 +27,7 @@ class Paiement
 
     #[ORM\Column(length: 30)]
     #[Groups(['paiement:read'])]
+    #[Assert\NotBlank(message: "Le moyen de paiement est obligatoire.")]
     private ?string $moyenPaiement = null;
 
     #[ORM\Column(length: 30)]
@@ -39,6 +42,7 @@ class Paiement
     #[ORM\OneToOne(inversedBy: 'paiement', targetEntity: Commande::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['paiement:read'])]
+    #[Assert\NotNull(message: "Le paiement doit être lié à une commande.")]
     private ?Commande $commande = null;
 
     public function getId(): ?int

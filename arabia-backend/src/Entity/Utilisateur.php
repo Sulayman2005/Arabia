@@ -17,6 +17,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -34,6 +36,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     #[Groups(['utilisateur:read', 'commande:read', 'favori:read'])]
+    #[Assert\NotBlank(message: "L'email est obligatoire.")]
     private ?string $email = null;
 
     /**
@@ -50,16 +53,19 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 50)]
     #[Groups(['utilisateur:read'])]
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
     private ?string $nom = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['utilisateur:read'])]
+    #[Assert\NotBlank(message: "Le prénom est obligatoire.")]
     private ?string $prenom = null;
 
     
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['utilisateur:read'])]
+    #[Assert\NotNull(message: "La date d'inscription est obligatoire.")]
     private ?\DateTime $dateInscription = null;
 
 

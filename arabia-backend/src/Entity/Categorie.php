@@ -15,6 +15,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
 #[ApiResource(
@@ -39,10 +40,22 @@ class Categorie
 
     #[ORM\Column(length: 100)]
     #[Groups(['categorie:read', 'categorie:write', 'produit:read'])]
+    #[Assert\NotBlank(message: "Le nom de la catégorie est obligatoire.")]
+    #[Assert\Length(
+        min: 2,
+        max: 100,
+        minMessage: "Le nom doit faire au moins {{ limit }} caractères.",
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(['categorie:read', 'categorie:write'])]
+    #[Assert\NotBlank(message: "La description est obligatoire.")]
+    #[Assert\Length(
+        min: 10,
+        minMessage: "La description doit faire au moins {{ limit }} caractères."
+    )]
     private ?string $description = null;
 
     /**
@@ -57,15 +70,9 @@ class Categorie
         $this->produits = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+    public function getId(): ?int { return $this->id; }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
+    public function getNom(): ?string { return $this->nom; }
 
     public function setNom(string $nom): static
     {
@@ -73,10 +80,7 @@ class Categorie
         return $this;
     }
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
+    public function getDescription(): ?string { return $this->description; }
 
     public function setDescription(string $description): static
     {

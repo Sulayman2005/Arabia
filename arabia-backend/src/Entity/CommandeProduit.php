@@ -9,6 +9,8 @@ use App\Repository\CommandeProduitRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 #[ORM\Entity(repositoryClass: CommandeProduitRepository::class)]
 #[ApiResource(
     operations: [new Get(), new GetCollection()],
@@ -25,15 +27,18 @@ class CommandeProduit
     #[ORM\ManyToOne(inversedBy: 'commandeProduits')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['commandeProduit:read'])]
+    #[Assert\NotNull(message: "La commande est obligatoire.")]
     private ?Commande $commande = null;
 
     #[ORM\ManyToOne(inversedBy: 'commandeProduits')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['commandeProduit:read'])]
+    #[Assert\NotNull(message: "Le produit est obligatoire.")]
     private ?Produit $produit = null;
 
     #[ORM\Column]
     #[Groups(['commandeProduit:read'])]
+    #[Assert\NotNull(message: "La quantité est obligatoire.")]
     private ?int $quantite = null;
 
     public function getId(): ?int

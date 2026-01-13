@@ -12,6 +12,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
 #[ORM\Entity(repositoryClass: CommandeRepository::class)]
 #[ApiResource(
     operations: [new Get(), new GetCollection()],
@@ -27,19 +29,27 @@ class Commande
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['commande:read'])]
+    #[Assert\NotNull(message: "La date de commande est obligatoire.")]
     private ?\DateTimeInterface $dateCommande = null;
 
     #[ORM\Column(length: 30)]
     #[Groups(['commande:read'])]
+    #[Assert\NotBlank(message: "Le statut est obligatoire.")]
+    #[Assert\Choice(
+        choices: ["en cours", "payée", "expédiée", "livrée", "annulée"],
+        message: "Statut invalide."
+    )]
     private ?string $statut = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Groups(['commande:read'])]
+    #[Assert\NotBlank(message: "Le total est obligatoire.")]
     private ?string $total = null;
 
     #[ORM\ManyToOne(inversedBy: 'commandes')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['commande:read'])]
+    #[Assert\NotNull(message: "Une commande doit avoir un utilisateur.")]
     private ?Utilisateur $utilisateur = null;
 
     /**
