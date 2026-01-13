@@ -12,17 +12,20 @@ class CommandeFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
+        // On associe les commandes uniquement à tes 2 users : admin / user
+        $users = [
+            $this->getReference('user_admin', Utilisateur::class),
+            $this->getReference('user_user', Utilisateur::class),
+        ];
+
         for ($i = 0; $i < 10; $i++) {
             $commande = new Commande();
             $commande->setDateCommande(new \DateTime());
             $commande->setStatut('en cours');
             $commande->setTotal('0.00');
 
-            $userIndex = random_int(0, 9);
-
-            $commande->setUtilisateur(
-                $this->getReference('user_'.$userIndex, Utilisateur::class)
-            );
+            // Alterne (ou random) entre admin et user
+            $commande->setUtilisateur($users[$i % 2]);
 
             $manager->persist($commande);
             $this->addReference('commande_'.$i, $commande);
