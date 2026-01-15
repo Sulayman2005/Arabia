@@ -13,19 +13,17 @@ security:
       pattern: ^/(_(profiler|wdt)|css|images|js)/
       security: false
 
-    # ✅ Endpoint JSON pour récupérer le JWT
     login:
-      pattern: ^/login$
+      pattern: ^/api/login$
       stateless: true
       provider: app_user_provider
       json_login:
-        check_path: /login
+        check_path: /api/login
         username_path: email
         password_path: password
         success_handler: lexik_jwt_authentication.handler.authentication_success
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-    # ✅ API protégée par JWT
     api:
       pattern: ^/api
       stateless: true
@@ -33,21 +31,12 @@ security:
       jwt: ~
 
   access_control:
-  # login public
-  - { path: ^/login$, roles: PUBLIC_ACCESS }
-
-  # ✅ Entrypoint API Platform (la "liste" /api)
-  - { path: ^/api$, roles: PUBLIC_ACCESS }
-
-  # docs publiques
+  - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+  - { path: ^/api$, roles: PUBLIC_ACCESS }     # <= remets ça juste pour voir la doc / index
   - { path: ^/api/docs, roles: PUBLIC_ACCESS }
   - { path: ^/api/docs\.json, roles: PUBLIC_ACCESS }
   - { path: ^/api/docs\.jsonld, roles: PUBLIC_ACCESS }
-
-  # ✅ tout le reste sous /api protégé
   - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
-
 
 
 

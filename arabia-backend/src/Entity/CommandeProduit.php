@@ -13,7 +13,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommandeProduitRepository::class)]
 #[ApiResource(
-    operations: [new Get(), new GetCollection()],
+    operations: [
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')")
+    ],
     normalizationContext: ['groups' => ['commandeProduit:read']]
 )]
 class CommandeProduit

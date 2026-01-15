@@ -20,12 +20,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-        new Delete(),
+        new Get(security: "is_granted('PUBLIC_ACCESS')"),
+        new GetCollection(security: "is_granted('PUBLIC_ACCESS')"),
+
+        new Post(security: "is_granted('ROLE_ADMIN')"),
+        new Put(security: "is_granted('ROLE_ADMIN')"),
+        new Patch(security: "is_granted('ROLE_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_ADMIN')"),
     ],
     normalizationContext: ['groups' => ['categorie:read']],
     denormalizationContext: ['groups' => ['categorie:write']]
@@ -117,3 +118,4 @@ class Categorie
         return $this;
     }
 }
+

@@ -14,7 +14,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PaiementRepository::class)]
 #[ApiResource(
-    operations: [new Get(), new GetCollection()],
+    operations: [
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+    ],
     normalizationContext: ['groups' => ['paiement:read']]
 )]
 class Paiement

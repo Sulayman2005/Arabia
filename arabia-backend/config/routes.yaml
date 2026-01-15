@@ -9,3 +9,7 @@
 
 controllers:
     resource: routing.controllers
+# ajout de la route pour le login JWT
+api_login:
+  path: /api/login
+  methods: [POST]

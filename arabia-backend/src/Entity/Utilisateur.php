@@ -23,7 +23,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ApiResource(
-    operations: [new Get(), new GetCollection()],
+    operations: [
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+    ],
     normalizationContext: ['groups' => ['utilisateur:read']]
 )]
 class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface

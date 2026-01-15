@@ -1,7 +1,33 @@
+# api_platform:
+# # ajout de swagger car le token JWT doit être passé dans le header Authorization
+#     # swagger:
+#     #     api_keys:
+#     #     JWT:
+#     #         name: Authorization
+#     #         type: header
+#     title: Hello API Platform
+#     version: 1.0.0
+#     defaults:
+#         stateless: true
+#         cache_headers:
+#             vary: ['Content-Type', 'Authorization', 'Origin']
 api_platform:
-    title: Hello API Platform
-    version: 1.0.0
-    defaults:
-        stateless: true
-        cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
+  title: Hello API Platform
+  version: 1.0.0
+
+  openapi:
+    swagger_ui_extra_configuration:
+      persistAuthorization: true
+
+  swagger:
+    api_keys:
+      JWT:
+        name: Authorization
+        type: header
+
+  defaults:
+    stateless: true
+    cache_headers:
+      vary: ['Content-Type', 'Authorization', 'Origin']
+
+

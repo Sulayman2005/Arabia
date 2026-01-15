@@ -14,7 +14,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FavoriRepository::class)]
 #[ApiResource(
-    operations: [new Get(), new GetCollection()],
+    operations: [
+        new Get(security: "is_granted('IS_AUTHENTICATED_FULLY')"),
+        new GetCollection(security: "is_granted('IS_AUTHENTICATED_FULLY')"),
+    ],
     normalizationContext: ['groups' => ['favori:read']]
 )]
 class Favori
