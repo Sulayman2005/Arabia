@@ -1,0 +1,6 @@
+
+<template>
+  <h1>Accueil</h1>
+  <p>Bienvenue</p>
+</template>
+<script setup></script>

@@ -32,11 +32,17 @@ security:
 
   access_control:
   - { path: ^/api/login$, roles: PUBLIC_ACCESS }
-  - { path: ^/api$, roles: PUBLIC_ACCESS }     # <= remets ça juste pour voir la doc / index
+
   - { path: ^/api/docs, roles: PUBLIC_ACCESS }
   - { path: ^/api/docs\.json, roles: PUBLIC_ACCESS }
   - { path: ^/api/docs\.jsonld, roles: PUBLIC_ACCESS }
-  - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+
+  - { path: ^/api/produits, roles: PUBLIC_ACCESS, methods: [GET] }
+  - { path: ^/api/categories, roles: PUBLIC_ACCESS, methods: [GET] }
+
+  - { path: ^/api, roles: PUBLIC_ACCESS }
+
 
 
 
