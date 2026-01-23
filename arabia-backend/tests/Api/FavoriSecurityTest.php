@@ -2,15 +2,18 @@
 
 namespace App\Tests\Api;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-
 final class FavoriSecurityTest extends ApiTestCase
 {
     use ApiHelperTrait;
 
     public function testFavorisIsDeniedWithoutToken(): void
     {
-        static::createClient()->request('GET', '/api/favoris');
+        static::createClient()->request('GET', '/api/favoris', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ]);
+
         $this->assertResponseStatusCodeSame(401);
     }
 
@@ -19,7 +22,9 @@ final class FavoriSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('GET', '/api/favoris', [
-            'headers' => $this->authHeader($token),
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseIsSuccessful(); // 200

@@ -2,15 +2,18 @@
 
 namespace App\Tests\Api;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-
 final class CategorieSecurityTest extends ApiTestCase
 {
     use ApiHelperTrait;
 
     public function testGetCategoriesIsPublic(): void
     {
-        static::createClient()->request('GET', '/api/categories');
+        static::createClient()->request('GET', '/api/categories', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ]);
+
         $this->assertResponseIsSuccessful(); // 200
     }
 
@@ -19,10 +22,14 @@ final class CategorieSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('POST', '/api/categories', [
-            'headers' => $this->authHeader($token),
-            'json' => [],
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
+            'json' => [], // payload invalide, mais on teste le droit d'accès
         ]);
 
+        // Selon ta config API Platform/Security ça peut être 403 ou 401.
+        // Si tu es sûr que user est authentifié => 403 est OK.
         $this->assertResponseStatusCodeSame(403);
     }
 
@@ -31,8 +38,10 @@ final class CategorieSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('admin@test.com', 'password');
 
         static::createClient()->request('POST', '/api/categories', [
-            'headers' => $this->authHeader($token),
-            'json' => [], // vide -> si admin autorisé, ça tombe en 422 (validation)
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
+            'json' => [], // vide -> admin autorisé => 422 attendu (validation)
         ]);
 
         $this->assertResponseStatusCodeSame(422);

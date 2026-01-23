@@ -1,9 +1,6 @@
 <?php
 
 namespace App\Tests\Api;
-use App\Tests\Api\ApiHelperTrait;
-
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 
 final class ProduitSecurityTest extends ApiTestCase
 {
@@ -11,7 +8,12 @@ final class ProduitSecurityTest extends ApiTestCase
 
     public function testGetProduitsIsPublic(): void
     {
-        static::createClient()->request('GET', '/api/produits');
+        static::createClient()->request('GET', '/api/produits', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ]);
+
         $this->assertResponseIsSuccessful(); // 200
     }
 
@@ -20,8 +22,10 @@ final class ProduitSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('POST', '/api/produits', [
-            'headers' => $this->authHeader($token),
-            'json' => [], // volontairement vide : on teste la permission, pas la validation
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
+            'json' => [], // on teste la permission, pas la validation
         ]);
 
         $this->assertResponseStatusCodeSame(403);
@@ -32,12 +36,12 @@ final class ProduitSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('admin@test.com', 'password');
 
         static::createClient()->request('POST', '/api/produits', [
-            'headers' => $this->authHeader($token),
-            'json' => [], // vide -> doit passer la security et tomber en validation
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
+            'json' => [], // admin autorisé -> 422 attendu
         ]);
 
-        // Si admin est autorisé, tu ne dois PAS avoir 403
-        // Normalement tu auras 422 (validation), ce qui prouve que la route est accessible en admin.
         $this->assertResponseStatusCodeSame(422);
     }
 }

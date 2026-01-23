@@ -2,8 +2,6 @@
 
 namespace App\Tests\Api;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-
 final class CommandeProduitSecurityTest extends ApiTestCase
 {
     use ApiHelperTrait;
@@ -13,7 +11,9 @@ final class CommandeProduitSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('GET', '/api/commande_produits', [
-            'headers' => $this->authHeader($token),
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseStatusCodeSame(403);
@@ -24,7 +24,9 @@ final class CommandeProduitSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('admin@test.com', 'password');
 
         static::createClient()->request('GET', '/api/commande_produits', [
-            'headers' => $this->authHeader($token),
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseIsSuccessful(); // 200

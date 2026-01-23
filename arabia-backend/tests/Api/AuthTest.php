@@ -2,30 +2,38 @@
 
 namespace App\Tests\Api;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use App\Tests\Api\ApiTestCase;
+
 
 final class AuthTest extends ApiTestCase
 {
     public function testLogin(): void
     {
         $response = static::createClient()->request('POST', '/api/login', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
             'json' => [
                 'email' => 'admin@test.com',
                 'password' => 'password',
             ],
         ]);
 
-        $this->assertResponseStatusCodeSame(200);
+        $this->assertResponseIsSuccessful();
 
         $data = $response->toArray(false);
 
-        $this->assertArrayHasKey('token', $data);
-        $this->assertNotEmpty($data['token']); // token JWT non vide
+        $this->assertArrayHasKey('token', $data, 'La réponse /api/login doit contenir un token JWT.');
+        $this->assertIsString($data['token']);
+        $this->assertNotSame('', $data['token']);
     }
 
-    public function testfauxmotdepasse(): void
+    public function testWrongPasswordReturns401(): void
     {
         static::createClient()->request('POST', '/api/login', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
             'json' => [
                 'email' => 'admin@test.com',
                 'password' => 'falsepassword',

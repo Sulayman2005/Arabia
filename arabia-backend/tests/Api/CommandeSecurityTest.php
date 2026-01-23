@@ -2,8 +2,6 @@
 
 namespace App\Tests\Api;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-
 final class CommandeSecurityTest extends ApiTestCase
 {
     use ApiHelperTrait;
@@ -13,7 +11,9 @@ final class CommandeSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('GET', '/api/commandes', [
-            'headers' => $this->authHeader($token),
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseStatusCodeSame(403);
@@ -24,7 +24,9 @@ final class CommandeSecurityTest extends ApiTestCase
         $token = $this->loginAndGetToken('admin@test.com', 'password');
 
         static::createClient()->request('GET', '/api/commandes', [
-            'headers' => $this->authHeader($token),
+            'headers' => $this->authHeader($token, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseIsSuccessful(); // 200
@@ -32,34 +34,37 @@ final class CommandeSecurityTest extends ApiTestCase
 
     public function testUserCanAccessCommandeItemWhenAuthenticated(): void
     {
-        // On teste juste "route item accessible si connecté".
-        // Pour éviter de dépendre d'un ID fixe, on prend le 1er élément de la collection en admin.
+        // On évite un ID fixe : on récupère une commande existante en admin.
         $adminToken = $this->loginAndGetToken('admin@test.com', 'password');
 
         $response = static::createClient()->request('GET', '/api/commandes', [
-            'headers' => $this->authHeader($adminToken),
+            'headers' => $this->authHeader($adminToken, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
         $this->assertResponseIsSuccessful();
-        $data = $response->toArray(false);
 
-        // API Platform JSON-LD: items dans "hydra:member"
+        $data = $response->toArray(false);
         $items = $data['hydra:member'] ?? [];
 
-        if (count($items) === 0) {
-            $this->markTestSkipped('Aucune commande en base test (charge une fixture commande ou crée-en une).');
+        if (!is_array($items) || count($items) === 0) {
+            $this->markTestSkipped('Aucune commande en base test (ajoute une fixture Commande ou crée-en une).');
         }
 
-        // IRI exemple: "/api/commandes/1"
         $iri = $items[0]['@id'] ?? null;
-        $this->assertNotNull($iri);
+
+        $this->assertIsString($iri, 'Le premier élément doit contenir un @id (IRI).');
+        $this->assertNotSame('', $iri, 'Le @id (IRI) ne doit pas être vide.');
 
         $userToken = $this->loginAndGetToken('user@test.com', 'password');
 
         static::createClient()->request('GET', $iri, [
-            'headers' => $this->authHeader($userToken),
+            'headers' => $this->authHeader($userToken, [
+                'Accept' => 'application/json',
+            ]),
         ]);
 
-        $this->assertResponseIsSuccessful(); // 200 si Get = IS_AUTHENTICATED_FULLY
+        $this->assertResponseIsSuccessful(); // 200 si item accessible aux utilisateurs authentifiés
     }
 }
