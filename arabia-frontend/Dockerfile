@@ -20,13 +20,13 @@ CMD ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
 FROM base AS build
 
 # Copier les fichiers de dépendances
-COPY frontend/package*.json ./
+COPY arabia-frontend/package*.json ./
 
 # Installer les dépendances
 RUN npm ci
 
 # Copier le code source
-COPY frontend/ .
+COPY arabia-frontend/ .
 
 # Argument de build pour l'API URL (pour la prod)
 ARG VITE_API_BASE_URL=http://localhost:8080

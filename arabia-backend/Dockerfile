@@ -56,13 +56,13 @@ RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
 
 # Copier les fichiers composer
-COPY backend/composer.* ./
+COPY arabia-backend/composer.* ./
 
 # Installer les dépendances (sans dev)
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
 # Copier le code source
-COPY backend/ .
+COPY arabia-backend/backend/ .
 
 # Dump autoload optimisé
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
