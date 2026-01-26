@@ -62,7 +62,7 @@ COPY arabia-backend/composer.* ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
 # Copier le code source
-COPY arabia-backend/backend/ .
+COPY arabia-backend/ .
 
 # Dump autoload optimisé
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
