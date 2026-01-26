@@ -1,6 +1,5 @@
 
 <template>
-  <h1>Accummmmeil</h1>
-  <p>Bienvenue</p>
+  <h1>Catalogue</h1>
 </template>
 <script setup></script>

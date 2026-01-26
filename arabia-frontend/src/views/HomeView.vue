@@ -1,5 +1,5 @@
 <script setup>
-
+import { RouterLink } from "vue-router";
 </script>
 
 <template>
@@ -18,29 +18,54 @@
 
     <section class="grid">
       <div class="card">
-        <img src="@/assets/musc_royal.PNG" alt="Parfum 1" width="120px" />
+        <RouterLink to="/produit/musc-royal">
+          <img src="@/assets/musc_royal.PNG" alt="Parfum 1" width="120px" />
+        </RouterLink>
       </div>
       <div class="card">
-        <img src="@/assets/amber_tears.PNG" alt="Parfum 2" width="120px" />
+        <RouterLink to="/produit/amber-tears">
+          <img src="@/assets/amber_tears.PNG" alt="Parfum 2" width="120px" />
+        </RouterLink>
       </div>
       <div class="card">
-        <img src="@/assets/black_saffron.PNG" alt="Parfum 3" width="120px" />
+        <RouterLink to="/produit/black-saffron">
+          <img src="@/assets/black_saffron.PNG" alt="Parfum 3" width="120px" />
+        </RouterLink>
       </div>
       <div class="card">
-        <img src="@/assets/desert_vanille.PNG" alt="Parfum 4" width="120px" />
+        <RouterLink to="/produit/desert-vanille">
+          <img src="@/assets/desert_vanille.PNG" alt="Parfum 4" width="120px" />
+        </RouterLink>
       </div>
       <div class="card">
-        <img src="@/assets/imperial_oud.PNG" alt="Parfum 5" width="120px" />
+        <RouterLink to="/produit/imperial-oud">
+          <img src="@/assets/imperial_oud.PNG" alt="Parfum 5" width="120px" />
+        </RouterLink>
       </div>
       <div class="card">
-        <img src="@/assets/rose_divine.PNG" alt="Parfum 6" width="120px" />
+        <RouterLink to="/produit/rose-divine">
+          <img src="@/assets/rose_divine.PNG" alt="Parfum 6" width="120px" />
+        </RouterLink>
       </div>
     </section>
   </main>
+  <footer class="logo_footer">
+    <img src="@/assets/logo.png" alt="Logo Arabia" />
+  </footer>
 </template>
 
 
 <style scoped>
+.logo_footer {
+  display: grid;
+  place-items: end;
+  margin-top: -59px;  
+}
+
+.logo img {
+    display: flex;
+  }
+
 .home {
   padding: 70px;
 }
@@ -86,6 +111,8 @@
 .card img {
   text-align: center;
   border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
 /* Responsive */

@@ -1,6 +1,5 @@
 
 <template>
-  <h1>Acc</h1>
-  <p>Bienvenue</p>
+  <h1>Favoris</h1>
 </template>
 <script setup></script>

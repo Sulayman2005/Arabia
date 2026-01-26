@@ -19,15 +19,9 @@ import { RouterLink, RouterView } from "vue-router";
     </div>
     <RouterView />
   </div>
-  <footer class="logo_footer">
-    <img src="@/assets/logo.png" alt="Logo Arabia" />
-  </footer>
 </template>
 
 <style scoped>
-  .logo img {
-    display: flex;
-  }
 
   .separator {
     display: grid;
@@ -57,9 +51,4 @@ import { RouterLink, RouterView } from "vue-router";
     font-weight: bold;
   }
   
-  .logo_footer {
-    display: grid;
-    place-items: end;
-    margin-top: -50px;  
-  }
 </style>
