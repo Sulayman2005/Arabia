@@ -8,9 +8,9 @@ const api = axios.create({
   },
 });
 
-const response = await api.get("/produits");
-const produits = response.data["hydra:member"];
-console.log(produits);
+// const response = await api.get("/produits");
+// const produits = response.data["hydra:member"];
+// console.log(produits);
 
 
 api.interceptors.request.use((config) => {
