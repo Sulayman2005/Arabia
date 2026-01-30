@@ -3,33 +3,50 @@
 namespace App\DataFixtures;
 
 use App\Entity\Commande;
-use App\Entity\Produit;
 use App\Entity\CommandeProduit;
+use App\Entity\Produit;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use Doctrine\Persistence\ObjectManager;
 
 class CommandeProduitFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        for ($i = 0; $i < 30; $i++) {
-            $cp = new CommandeProduit();
+        /** @var Commande $commande0 */
+        $commande0 = $this->getReference('commande_0', Commande::class);
 
-            $cp->setCommande(
-                $this->getReference('commande_'.random_int(0, 9), Commande::class)
-            );
+        /** @var Commande $commande1 */
+        $commande1 = $this->getReference('commande_1', Commande::class);
 
-            $cp->setProduit(
-                $this->getReference('produit_'.random_int(0, 19), Produit::class)
-            );
+        // ✅ Liste de tes 6 produits (refs)
+        $refs = [
+            'produit_musc_royal',
+            'produit_amber_tears',
+            'produit_black_saffron',
+            'produit_desert_vanille',
+            'produit_imperial_oud',
+            'produit_rose_divine',
+        ];
 
-            $cp->setQuantite(random_int(1, 3));
+        $this->addLigne($manager, $commande0, $this->getReference($refs[0], Produit::class), 1);
+        $this->addLigne($manager, $commande0, $this->getReference($refs[2], Produit::class), 2);
 
-            $manager->persist($cp);
-        }
+        $this->addLigne($manager, $commande1, $this->getReference($refs[1], Produit::class), 1);
+        $this->addLigne($manager, $commande1, $this->getReference($refs[3], Produit::class), 1);
+        $this->addLigne($manager, $commande1, $this->getReference($refs[5], Produit::class), 1);
 
         $manager->flush();
+    }
+
+    private function addLigne(ObjectManager $manager, Commande $commande, Produit $produit, int $quantite): void
+    {
+        $cp = new CommandeProduit();
+        $cp->setCommande($commande);
+        $cp->setProduit($produit);
+        $cp->setQuantite($quantite);
+
+        $manager->persist($cp);
     }
 
     public function getDependencies(): array

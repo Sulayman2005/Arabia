@@ -1,11 +1,44 @@
 <script setup>
+import { onMounted, ref, computed } from "vue";
+import { useProduits } from "@/composables/useProduits";
 import { RouterLink } from "vue-router";
+
+const { produits, loading, error, getProduits } = useProduits();
+
+const search = ref("");
+
+const produitsFiltres = computed(() => {
+  const q = search.value.trim().toLowerCase();
+  if (!q) return produits.value;
+  return produits.value.filter((p) => p.nom?.toLowerCase().includes(q));
+});
+
+const imgSrc = (image) => {
+  return new URL(`../assets/${image}`, import.meta.url).href;
+};
+
+
+onMounted(() => {
+  getProduits();
+});
 </script>
 
+
 <template>
+  <div class="search-container">
+    <input
+      v-model="search"
+      type="text"
+      placeholder="Rechercher un parfum..."
+      class="search-input"
+    />
+  </div>
+
   <main class="home">
     <section class="hero">
       <h1 class="title">Arabia</h1>
+
+      
       <p class="texte">
         Arabia est une marque de cosmétique et de parfumerie inspirée par l'élégance et la sensualité du musc.
         Elle incarne l'essence des traditions orientales tout en proposant des créations modernes raffinées et minimaliste.
@@ -13,64 +46,90 @@ import { RouterLink } from "vue-router";
         Arabia célèbre un art de vivre où le parfum devient une signature personnelle, subtile et inoubliable.
       </p>
     </section>
-
+    
     <h2 class="subtitle">Liste de nos parfums</h2>
 
-    <section class="grid">
-      <div class="card">
-        <RouterLink to="/produit/musc-royal">
-          <img src="@/assets/musc_royal.PNG" alt="Parfum 1" width="120px" />
+    <div class="erreur_load">
+      <p v-if="loading" class="info">Chargement...</p>
+      <p v-else-if="error" class="error">Erreur lors du chargement: {{ error }}</p>
+    </div>
+    
+    <section v-if="!loading && !error && produitsFiltres.length" class="grid">
+      <article v-for="p in produitsFiltres" :key="p.id" class="card">
+        <RouterLink :to="`/produits/${p.id}`">
+          <img class="img" :src="imgSrc(p.image)" :alt="p.nom" />
         </RouterLink>
-      </div>
-      <div class="card">
-        <RouterLink to="/produit/amber-tears">
-          <img src="@/assets/amber_tears.PNG" alt="Parfum 2" width="120px" />
-        </RouterLink>
-      </div>
-      <div class="card">
-        <RouterLink to="/produit/black-saffron">
-          <img src="@/assets/black_saffron.PNG" alt="Parfum 3" width="120px" />
-        </RouterLink>
-      </div>
-      <div class="card">
-        <RouterLink to="/produit/desert-vanille">
-          <img src="@/assets/desert_vanille.PNG" alt="Parfum 4" width="120px" />
-        </RouterLink>
-      </div>
-      <div class="card">
-        <RouterLink to="/produit/imperial-oud">
-          <img src="@/assets/imperial_oud.PNG" alt="Parfum 5" width="120px" />
-        </RouterLink>
-      </div>
-      <div class="card">
-        <RouterLink to="/produit/rose-divine">
-          <img src="@/assets/rose_divine.PNG" alt="Parfum 6" width="120px" />
-        </RouterLink>
-      </div>
+      </article>
     </section>
+
+    <p v-else-if="!loading && !error" class="no-results">
+      Aucun parfum trouvé.
+    </p>
   </main>
-  <footer class="logo_footer">
-    <img src="@/assets/logo.png" alt="Logo Arabia" />
-  </footer>
 </template>
 
 
+
 <style scoped>
-.logo_footer {
-  display: grid;
-  place-items: end;
-  margin-top: -59px;  
+.erreur_load {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.logo img {
-    display: flex;
-  }
+.search-container {
+  margin-left: auto;
+  margin-top: -40px;
+  margin-bottom: 20px;
+  background-color: #0f0f0f;
+  border: 1px solid #c9a24d;
+  border-radius: 30px;
+  width: 220px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.search-container:focus-within {
+  border-color: #e3c77a;
+  box-shadow: 0 0 10px rgba(201, 162, 77, 0.4);
+}
+
+.search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f5f5f5;
+  font-size: 14px;
+  padding: 8px 10px;
+  font-family: "Poppins", sans-serif;
+}
+
+.search-input::placeholder {
+  color: #b5b5b5;
+}
+
+.no-results {
+  text-align: center;
+  opacity: 0.8;
+  margin: 10px 0 20px;
+}
+
+.product-name {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+/* .logo_footer {
+  display: grid;
+  place-items: end;
+  margin-top: -59px;
+} */
 
 .home {
   padding: 70px;
 }
 
-/* Section du haut */
 .hero {
   max-width: 900px;
   margin: 0 auto 70px;
@@ -89,7 +148,6 @@ import { RouterLink } from "vue-router";
   max-width: 700px;
 }
 
-/* Sous-titre */
 .subtitle {
   text-align: center;
   font-weight: 600;
@@ -97,7 +155,6 @@ import { RouterLink } from "vue-router";
   letter-spacing: 0.4px;
 }
 
-/* Grille produits */
 .grid {
   max-width: 1100px;
   display: grid;
@@ -107,15 +164,15 @@ import { RouterLink } from "vue-router";
   gap: 28px;
 }
 
-/* Cards (placeholder) */
 .card img {
+  width: 150px;
+  height: 180px;
   text-align: center;
   border-radius: 18px;
   cursor: pointer;
   transition: transform 0.2s;
 }
 
-/* Responsive */
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

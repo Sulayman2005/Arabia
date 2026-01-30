@@ -1,32 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import HomeView from "@/views/HomeView.vue";
-import ProduitsView from "@/views/produit/ProduitsView.vue";
 import CatalogueView from "@/views/CatalogueView.vue";
 import FavorisView from "@/views/FavorisView.vue";
 import ConnexionView from "@/views/ConnexionView.vue";
-
-import MuscRoyal from "@/views/produit/MuscroyalView.vue";
-import AmberTears from "@/views/produit/AmbertearsView.vue";
-import BlackSaffron from "@/views/produit/BlacksaffronView.vue";
-import DesertVanille from "@/views/produit/DesertvanilleView.vue";
-import ImperialOud from "@/views/produit/ImperialoudView.vue";
-import RoseDivine from "@/views/produit/RosedivineView.vue";
+import ProduitView from "@/views/ProduitView.vue";
 
 const routes = [
   { path: "/connexion", name: "connexion", component: ConnexionView },
 
-  { path: "/", name: "home", component: HomeView, meta: { requiresAuth: true } },
+  { path: "/", name: "home", component: HomeView },
   { path: "/favoris", name: "favoris", component: FavorisView, meta: { requiresAuth: true } },
   { path: "/catalogue", name: "catalogue", component: CatalogueView, meta: { requiresAuth: true } },
-  { path: "/produit", name: "produit", component: ProduitsView, meta: { requiresAuth: true } },
-
-  { path: "/produit/musc-royal", component: MuscRoyal, meta: { requiresAuth: true } },
-  { path: "/produit/amber-tears", component: AmberTears, meta: { requiresAuth: true } },
-  { path: "/produit/black-saffron", component: BlackSaffron, meta: { requiresAuth: true } },
-  { path: "/produit/desert-vanille", component: DesertVanille, meta: { requiresAuth: true } },
-  { path: "/produit/imperial-oud", component: ImperialOud, meta: { requiresAuth: true } },
-  { path: "/produit/rose-divine", component: RoseDivine, meta: { requiresAuth: true } },
+  { path: "/produits/:id", name: "produit", component: ProduitView, props: true },
 ];
 
 const router = createRouter({
@@ -34,9 +20,9 @@ const router = createRouter({
   routes,
 });
 
-/* 🔐 GUARD D’AUTHENTIFICATION */
+
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated");
+  const isAuthenticated = localStorage.getItem("token") !== null;
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next("/connexion");

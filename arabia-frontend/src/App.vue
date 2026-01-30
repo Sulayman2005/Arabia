@@ -11,30 +11,27 @@ import { RouterLink, RouterView } from "vue-router";
       <RouterLink to="/">Accueil</RouterLink>
       <RouterLink to="/favoris">Favoris</RouterLink>
       <RouterLink to="/catalogue">Catalogue</RouterLink>
-      <RouterLink to="/produit">Produit</RouterLink>
       <RouterLink to="/connexion">Se connecter</RouterLink>
     </nav>
-    <div class="separator">
-      <img src="@/assets/separator.png" alt="Séparateur" /> 
-    </div>
     <RouterView />
   </div>
+  <footer class="logo_footer">
+    <img src="@/assets/logo.png" alt="Logo Arabia" />
+  </footer>
 </template>
 
 <style scoped>
-
-  .separator {
+  .logo_footer {
     display: grid;
     place-items: end;
-    margin-top: -40px;
-    margin-bottom: 20px;
+    margin-top: -79px;
   }
 
   .navigation {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 100px;
+    gap: 130px;
     list-style: none;
     margin-top: -40px;
   }

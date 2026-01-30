@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from "vue";
-import { useRouter, RouterLink } from "vue-router";
+import { useRouter } from "vue-router";
+import api from "@/api/axios";
+
 
 const router = useRouter();
 
@@ -14,7 +16,7 @@ const error = ref("");
 const onSubmit = async () => {
   error.value = "";
 
-  // mini validation
+
   if (!email.value.trim() || !password.value.trim()) {
     error.value = "Veuillez renseigner votre email et votre mot de passe.";
     return;
@@ -23,16 +25,34 @@ const onSubmit = async () => {
   loading.value = true;
 
   try {
-    await new Promise((r) => setTimeout(r, 700)); // simulation
-    localStorage.setItem("isAuthenticated", "true");
+    // ✅ appel réel à Symfony (POST /api/login)
+    const res = await api.post("/login", {
+      email: email.value.trim(),
+      password: password.value,
+    });
+
+    const token = res.data?.token; // Lexik renvoie "token"
+    if (!token) throw new Error("Token manquant dans la réponse");
+
+    // ✅ stockage du token (utilisé par ton interceptor axios)
+    localStorage.setItem("token", token);
+
+    // optionnel: remember
+    if (remember.value) {
+      localStorage.setItem("rememberedEmail", email.value.trim());
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
+
     router.push("/");
   } catch (e) {
-    error.value = "Identifiants incorrects. Veuillez réessayer.";
+    error.value = "Identifiants incorrects";
   } finally {
     loading.value = false;
   }
 };
 </script>
+
 
 <template>
   <main class="auth">
@@ -100,7 +120,6 @@ const onSubmit = async () => {
 </template>
 
 <style scoped>
-/* ============ Theme Arabia (Noir / Or) ============ */
 .auth {
   min-height: calc(100vh - 80px);
   padding: 90px 18px 40px;

@@ -10,20 +10,14 @@ class AppFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        // $product = new Product();
-        // $manager->persist($product);
-
         $manager->flush();
     }
 
     public function getDependencies(): array
     {
         return [
-            UtilisateurFixtures::class,
-            CategorieFixtures::class,
-            ProduitFixtures::class,
-            CommandeFixtures::class,
-            CommandeProduitFixtures::class,
+           ProduitFixtures::class,
+           CategorieFixtures::class,
         ];
     }
 }
