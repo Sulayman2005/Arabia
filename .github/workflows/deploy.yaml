@@ -19,15 +19,32 @@ jobs:
     runs-on: ubuntu-latest
     
     # Service MySQL éphémère pour les tests
+    # services:
+    #   mysql:
+    #     image: mysql:8.0
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: root
+    #       MYSQL_DATABASE: arabia_test
+    #     ports:
+    #       - 3306:3306
+    #     options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     services:
       mysql:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: arabia_test
+          MYSQL_USER: app
+          MYSQL_PASSWORD: app
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uapp -papp"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     
     steps:
       - name: Checkout code
@@ -56,7 +73,7 @@ jobs:
       - name: Configure Backend for Tests
         working-directory: ./arabia-backend
         run: |
-          sed -i 's|root@127|root:root@127|' .env.test
+          # sed -i 's|root@127|root:root@127|' .env.test
           
           mkdir -p config/jwt/test
           openssl genpkey -out config/jwt/test/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:test_passphrase
