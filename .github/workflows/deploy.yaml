@@ -1,8 +1,3 @@
-# ============================================
-# Workflow GitHub Actions - CI/CD arabia
-# Pipeline : tests automatisés + déploiement auto en production
-# ============================================
-
 name: CI/CD arabia Production
 
 on:
@@ -12,9 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  # ============================================
-  # JOB 1 : Tests Backend + Frontend
-  # ============================================
   test:
     runs-on: ubuntu-latest
 
@@ -56,22 +48,21 @@ jobs:
         working-directory: ./arabia-backend
         run: composer install --no-interaction --prefer-dist --no-scripts
 
-      # Configuration complète de l'environnement de test
-      # Génère les clés JWT, prépare la BDD, lance migrations + fixtures
+      # ✅ Donne les droits à app sur la DB que Doctrine utilise en test
+      - name: Grant MySQL privileges for tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS arabia_test_test;"
+          mysql -h 127.0.0.1 -uroot -proot -e "GRANT ALL PRIVILEGES ON arabia_test_test.* TO 'app'@'%'; FLUSH PRIVILEGES;"
+          mysql -h 127.0.0.1 -uroot -proot -e "GRANT ALL PRIVILEGES ON arabia_test.* TO 'app'@'%'; FLUSH PRIVILEGES;"
+
       - name: Configure Backend for Tests
         working-directory: ./arabia-backend
         env:
           APP_ENV: test
           APP_DEBUG: "1"
-
-          # ✅ Force la DB en CI (évite toute confusion avec .env/.env.test)
           DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
-
-          # ✅ Désactive le suffixe auto "_test" pour éviter arabia_test_test
-          DOCTRINE_DBNAME_SUFFIX: ""
-
-          # (optionnel mais utile)
-          DEFAULT_URI: http://localhost
         run: |
           echo "Waiting for MySQL..."
           for i in {1..30}; do
@@ -85,9 +76,7 @@ jobs:
           chmod 600 config/jwt/test/private.pem
           chmod 644 config/jwt/test/public.pem
 
-          # ✅ La DB est déjà créée par MYSQL_DATABASE, on évite que ça casse
           php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction || true
-
           php bin/console doctrine:migrations:migrate --env=test --no-interaction
           php bin/console doctrine:fixtures:load --no-interaction --env=test
           php bin/console cache:clear --env=test
@@ -97,7 +86,6 @@ jobs:
         env:
           APP_ENV: test
           DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
-          DOCTRINE_DBNAME_SUFFIX: ""
         run: php bin/phpunit
 
       - name: Install Frontend Dependencies
@@ -112,10 +100,6 @@ jobs:
         working-directory: ./arabia-frontend
         run: npm run build
 
-  # ============================================
-  # JOB 2 : Déploiement automatique
-  # S'exécute uniquement si tests OK + push sur main
-  # ============================================
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -131,20 +115,15 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
-
             cd ${{ secrets.DEPLOY_PATH }}
-
             echo "Pulling latest changes..."
             git pull origin main
-
             echo "Building and restarting containers..."
             docker compose down
             docker compose build --no-cache
             docker compose up -d
-
             echo "Waiting for containers..."
             sleep 30
             docker image prune -f
-
             echo "Deployment completed!"
             docker compose ps
