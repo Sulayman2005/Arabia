@@ -2,9 +2,10 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/api/axios";
-
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
+const auth = useAuthStore();
 
 const email = ref("");
 const password = ref("");
@@ -16,7 +17,6 @@ const error = ref("");
 const onSubmit = async () => {
   error.value = "";
 
-
   if (!email.value.trim() || !password.value.trim()) {
     error.value = "Veuillez renseigner votre email et votre mot de passe.";
     return;
@@ -25,26 +25,25 @@ const onSubmit = async () => {
   loading.value = true;
 
   try {
-    // ✅ appel réel à Symfony (POST /api/login)
+    // POST /api/login (Symfony + LexikJWT)
     const res = await api.post("/login", {
       email: email.value.trim(),
       password: password.value,
     });
 
-    const token = res.data?.token; // Lexik renvoie "token"
+    const token = res.data?.token;
     if (!token) throw new Error("Token manquant dans la réponse");
 
-    // ✅ stockage du token (utilisé par ton interceptor axios)
-    localStorage.setItem("token", token);
+    // ✅ Pinia devient la source de vérité
+    auth.setAuth(token, { email: email.value.trim() });
 
-    // optionnel: remember
     if (remember.value) {
       localStorage.setItem("rememberedEmail", email.value.trim());
     } else {
       localStorage.removeItem("rememberedEmail");
     }
 
-    router.push("/");
+    router.push("/accueil");
   } catch (e) {
     error.value = "Identifiants incorrects";
   } finally {
@@ -52,7 +51,6 @@ const onSubmit = async () => {
   }
 };
 </script>
-
 
 <template>
   <main class="auth">
@@ -106,8 +104,6 @@ const onSubmit = async () => {
             <input v-model="remember" type="checkbox" />
             <span>Se souvenir de moi</span>
           </label>
-
-          <a class="link" href="#" @click.prevent>Mot de passe oublié ?</a>
         </div>
 
         <button class="btn" type="submit" :disabled="loading">
@@ -215,7 +211,6 @@ const onSubmit = async () => {
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
 }
 
-/* input + bouton afficher/masquer */
 .password {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -261,16 +256,6 @@ const onSubmit = async () => {
   accent-color: #d4af37;
 }
 
-.link {
-  color: rgba(212, 175, 55, 0.95);
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
 .btn {
   margin-top: 6px;
   height: 48px;
@@ -295,14 +280,6 @@ const onSubmit = async () => {
   transform: none;
 }
 
-.foot {
-  margin: 6px 0 0;
-  text-align: center;
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-/* Responsive */
 @media (max-width: 520px) {
   .card {
     padding: 22px;

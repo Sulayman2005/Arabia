@@ -7,12 +7,14 @@ import ConnexionView from "@/views/ConnexionView.vue";
 import ProduitView from "@/views/ProduitView.vue";
 
 const routes = [
+  { path: "/", redirect: "/connexion" },
+
   { path: "/connexion", name: "connexion", component: ConnexionView },
 
-  { path: "/", name: "home", component: HomeView },
+  { path: "/accueil", name: "accueil", component: HomeView, meta: { requiresAuth: true } },
   { path: "/favoris", name: "favoris", component: FavorisView, meta: { requiresAuth: true } },
   { path: "/catalogue", name: "catalogue", component: CatalogueView, meta: { requiresAuth: true } },
-  { path: "/produits/:id", name: "produit", component: ProduitView, props: true },
+  { path: "/produits/:id", name: "produit", component: ProduitView ,props: true, },
 ];
 
 const router = createRouter({
@@ -20,13 +22,14 @@ const router = createRouter({
   routes,
 });
 
-
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem("token") !== null;
+  const isAuthenticated = !!localStorage.getItem("token");
+
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next("/connexion");
-  } else {
+  }
+  else {
     next();
   }
 });
