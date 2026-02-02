@@ -17,7 +17,7 @@ jobs:
   # ============================================
   test:
     runs-on: ubuntu-latest
-    
+
     # Service MySQL éphémère pour les tests
     services:
       mysql:
@@ -27,72 +27,118 @@ jobs:
           MYSQL_DATABASE: arabia_test
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-    
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      # ✅ Debug : montre la structure du repo dans l'action (évite les chemins faux)
+      - name: Show repo structure
+        run: |
+          pwd
+          ls -la
+          echo "---- folders ----"
+          find . -maxdepth 2 -type d -print
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: pdo_mysql, zip, intl, opcache
           coverage: none
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: composer install --no-interaction --prefer-dist --no-scripts
-      
-      # Configuration complète de l'environnement de test
-      # Génère les clés JWT, crée la BDD, lance les migrations et fixtures
-      - name: Configure Backend for Tests
-        working-directory: ./backend
+          # ✅ FIX : ton dossier est arabia-frontend (pas frontend)
+          cache-dependency-path: arabia-frontend/package-lock.json
+
+      # ----------------------------
+      # Backend (Symfony / PHP)
+      # ----------------------------
+      - name: Check backend files exist
         run: |
-          sed -i 's|root@127|root:root@127|' .env.test
-          
+          ls -la arabia-backend
+          test -f arabia-backend/composer.json
+          test -f arabia-backend/bin/console
+
+      - name: Install Backend Dependencies
+        working-directory: ./arabia-backend
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Configure Backend for Tests
+        working-directory: ./arabia-backend
+        env:
+          # ✅ important: certains projets ont besoin de cette variable
+          APP_ENV: test
+        run: |
+          # Fix DSN si ton .env.test est au format root@127...
+          # (tu peux supprimer si ton DSN est déjà bon)
+          if [ -f ".env.test" ]; then
+            sed -i 's|root@127|root:root@127|' .env.test || true
+          fi
+
           mkdir -p config/jwt/test
-          openssl genpkey -out config/jwt/test/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:test_passphrase
-          openssl pkey -in config/jwt/test/private.pem -passin pass:test_passphrase -out config/jwt/test/public.pem -pubout
+
+          # Génère clés JWT pour l'env test (si LexikJWT)
+          openssl genpkey \
+            -out config/jwt/test/private.pem \
+            -aes256 \
+            -algorithm rsa \
+            -pkeyopt rsa_keygen_bits:4096 \
+            -pass pass:test_passphrase
+
+          openssl pkey \
+            -in config/jwt/test/private.pem \
+            -passin pass:test_passphrase \
+            -out config/jwt/test/public.pem \
+            -pubout
+
           chmod 600 config/jwt/test/private.pem
           chmod 644 config/jwt/test/public.pem
-          
+
+          # Attendre que MySQL soit prêt
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && echo "MySQL is up" && break
+            echo "Waiting MySQL... ($i)"
+            sleep 1
+          done
+
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:migrations:migrate --env=test --no-interaction
           php bin/console doctrine:fixtures:load --no-interaction --env=test
           php bin/console cache:clear --env=test
-      
+
       - name: Run Backend Tests
-        working-directory: ./backend
+        working-directory: ./arabia-backend
         run: php bin/phpunit
-      
+
+      # ----------------------------
+      # Frontend
+      # ----------------------------
+      - name: Check frontend files exist
+        run: |
+          ls -la arabia-frontend
+          test -f arabia-frontend/package.json
+
       - name: Install Frontend Dependencies
-        working-directory: ./frontend
+        working-directory: ./arabia-frontend
         run: npm ci
-      
+
       - name: Run Frontend Unit Tests
-        working-directory: ./frontend
+        working-directory: ./arabia-frontend
         run: npm run test
-      
+
       - name: Build Frontend
-        working-directory: ./frontend
+        working-directory: ./arabia-frontend
         run: npm run build
-      
-      # Tests E2E Playwright (désactivés pour performances)
-      # - name: Install Playwright Browsers
-      #   working-directory: ./frontend
-      #   run: npx playwright install --with-deps chromium
-      
-      # - name: Run E2E Tests
-      #   working-directory: ./frontend
-      #   run: npx playwright test
 
   # ============================================
   # JOB 2 : Déploiement automatique
@@ -102,34 +148,38 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          # Secrets stockés dans GitHub Secrets
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          
-          # Script de déploiement sur le serveur
           script: |
             set -e
-            
+
             cd ${{ secrets.DEPLOY_PATH }}
-            
+
             echo "Pulling latest changes..."
             git pull origin main
-            
+
             echo "Building and restarting containers..."
             docker compose down
             docker compose build --no-cache
             docker compose up -d
-            
+
             echo "Waiting for containers..."
-            sleep 30
-            docker image prune -f
-            
-            echo "Deployment completed!"
+            sleep 20
+
+            echo "Docker status:"
             docker compose ps
+
+            echo "Nginx logs (if exists):"
+            docker compose logs --tail=80 nginx || true
+
+            echo "Backend logs (if exists):"
+            docker compose logs --tail=120 backend || true
+
+            echo "Deployment completed!"
