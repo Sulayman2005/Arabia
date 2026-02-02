@@ -17,17 +17,6 @@ jobs:
   # ============================================
   test:
     runs-on: ubuntu-latest
-    
-    # Service MySQL éphémère pour les tests
-    # services:
-    #   mysql:
-    #     image: mysql:8.0
-    #     env:
-    #       MYSQL_ROOT_PASSWORD: root
-    #       MYSQL_DATABASE: arabia_test
-    #     ports:
-    #       - 3306:3306
-    #     options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     services:
       mysql:
@@ -45,71 +34,83 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: pdo_mysql, zip, intl, opcache
           coverage: none
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: arabia-frontend/package-lock.json
-      
+
       - name: Install Backend Dependencies
         working-directory: ./arabia-backend
         run: composer install --no-interaction --prefer-dist --no-scripts
-      
+
       # Configuration complète de l'environnement de test
-      # Génère les clés JWT, crée la BDD, lance les migrations et fixtures
+      # Génère les clés JWT, prépare la BDD, lance migrations + fixtures
       - name: Configure Backend for Tests
         working-directory: ./arabia-backend
+        env:
+          APP_ENV: test
+          APP_DEBUG: "1"
+
+          # ✅ Force la DB en CI (évite toute confusion avec .env/.env.test)
+          DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
+
+          # ✅ Désactive le suffixe auto "_test" pour éviter arabia_test_test
+          DOCTRINE_DBNAME_SUFFIX: ""
+
+          # (optionnel mais utile)
+          DEFAULT_URI: http://localhost
         run: |
-          # sed -i 's|root@127|root:root@127|' .env.test
-          
+          echo "Waiting for MySQL..."
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && echo "MySQL is up" && break
+            sleep 1
+          done
+
           mkdir -p config/jwt/test
           openssl genpkey -out config/jwt/test/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:test_passphrase
           openssl pkey -in config/jwt/test/private.pem -passin pass:test_passphrase -out config/jwt/test/public.pem -pubout
           chmod 600 config/jwt/test/private.pem
           chmod 644 config/jwt/test/public.pem
-          
+
+          # ✅ La DB est déjà créée par MYSQL_DATABASE, on évite que ça casse
           php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction || true
+
           php bin/console doctrine:migrations:migrate --env=test --no-interaction
           php bin/console doctrine:fixtures:load --no-interaction --env=test
           php bin/console cache:clear --env=test
-      
+
       - name: Run Backend Tests
         working-directory: ./arabia-backend
+        env:
+          APP_ENV: test
+          DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
+          DOCTRINE_DBNAME_SUFFIX: ""
         run: php bin/phpunit
-      
+
       - name: Install Frontend Dependencies
         working-directory: ./arabia-frontend
         run: npm ci
-      
+
       - name: Run Frontend Unit Tests
         working-directory: ./arabia-frontend
         run: npm run test
-      
+
       - name: Build Frontend
         working-directory: ./arabia-frontend
         run: npm run build
-      
-      # Tests E2E Playwright (désactivés pour performances)
-      # - name: Install Playwright Browsers
-      #   working-directory: ./frontend
-      #   run: npx playwright install --with-deps chromium
-      
-      # - name: Run E2E Tests
-      #   working-directory: ./frontend
-      #   run: npx playwright test
 
   # ============================================
   # JOB 2 : Déploiement automatique
@@ -119,34 +120,31 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          # Secrets stockés dans GitHub Secrets
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          
-          # Script de déploiement sur le serveur
           script: |
             set -e
-            
+
             cd ${{ secrets.DEPLOY_PATH }}
-            
+
             echo "Pulling latest changes..."
             git pull origin main
-            
+
             echo "Building and restarting containers..."
             docker compose down
             docker compose build --no-cache
             docker compose up -d
-            
+
             echo "Waiting for containers..."
             sleep 30
             docker image prune -f
-            
+
             echo "Deployment completed!"
             docker compose ps
