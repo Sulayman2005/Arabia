@@ -2,8 +2,14 @@
 import { onMounted, ref, computed } from "vue";
 import { useProduits } from "@/composables/useProduits";
 import { RouterLink } from "vue-router";
+import { useFavorisStore } from "@/stores/favoris";
 
 const { produits, loading, error, getProduits } = useProduits();
+const favorisStore = useFavorisStore();
+
+const props = defineProps({
+  product: Object
+})
 
 const search = ref("");
 
@@ -21,6 +27,9 @@ const imgSrc = (image) => {
 onMounted(() => {
   getProduits();
 });
+
+
+
 </script>
 
 
@@ -59,6 +68,9 @@ onMounted(() => {
         <RouterLink :to="`/produits/${p.id}`">
           <img class="img" :src="imgSrc(p.image)" :alt="p.nom" />
         </RouterLink>
+        <div class="add_favoris">
+          <button @click="favorisStore.addFavori(p)">Ajoutez aux favoris</button>
+        </div>
       </article>
     </section>
 
@@ -156,7 +168,7 @@ onMounted(() => {
 }
 
 .grid {
-  max-width: 1100px;
+  max-width: 800px;
   display: grid;
   place-items: center;
   margin: 0 auto;
@@ -171,6 +183,10 @@ onMounted(() => {
   border-radius: 18px;
   cursor: pointer;
   transition: transform 0.2s;
+}
+
+.add_favoris button {
+  display: flex;
 }
 
 @media (max-width: 900px) {

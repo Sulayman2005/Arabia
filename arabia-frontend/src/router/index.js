@@ -5,6 +5,10 @@ import CatalogueView from "@/views/CatalogueView.vue";
 import FavorisView from "@/views/FavorisView.vue";
 import ConnexionView from "@/views/ConnexionView.vue";
 import ProduitView from "@/views/ProduitView.vue";
+import ProfilView from "@/views/ProfilView.vue";
+import ContactView from "@/views/ContactView.vue";
+import AproposView from "@/views/AproposView.vue";
+import FaqView from "@/views/FaqView.vue";
 
 const routes = [
   { path: "/", redirect: "/connexion" },
@@ -15,6 +19,10 @@ const routes = [
   { path: "/favoris", name: "favoris", component: FavorisView, meta: { requiresAuth: true } },
   { path: "/catalogue", name: "catalogue", component: CatalogueView, meta: { requiresAuth: true } },
   { path: "/produits/:id", name: "produit", component: ProduitView ,props: true, },
+  { path: "/profil", name: "profil", component: ProfilView, meta: { requiresAuth: true } },
+  { path: "/contact", name: "contact", component: ContactView, meta: { requiresAuth: true } },
+  { path: "/apropos", name: "apropos", component: AproposView, meta: { requiresAuth: true } },
+  { path: "/faq", name: "faq", component: FaqView, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({
