@@ -9,6 +9,7 @@ import ProfilView from "@/views/ProfilView.vue";
 import ContactView from "@/views/ContactView.vue";
 import AproposView from "@/views/AproposView.vue";
 import FaqView from "@/views/FaqView.vue";
+import NotFoundView from "@/views/NotFoundView.vue";
 
 const routes = [
   { path: "/", redirect: "/connexion" },
@@ -23,6 +24,9 @@ const routes = [
   { path: "/contact", name: "contact", component: ContactView, meta: { requiresAuth: true } },
   { path: "/apropos", name: "apropos", component: AproposView, meta: { requiresAuth: true } },
   { path: "/faq", name: "faq", component: FaqView, meta: { requiresAuth: true } },
+
+  {path: "/:pathMatch(.*)*", name: "NotFound", component: NotFoundView },
+
 ];
 
 const router = createRouter({

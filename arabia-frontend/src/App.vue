@@ -63,6 +63,7 @@ const handleLogout = () => {
   margin-top: auto; 
   display: flex;
   justify-content: end;
+  margin-top: -14em;
 }
 
 .logo_footer img {
