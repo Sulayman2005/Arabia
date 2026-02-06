@@ -28,8 +28,6 @@ onMounted(() => {
   getProduits();
 });
 
-
-
 </script>
 
 
@@ -138,9 +136,6 @@ onMounted(() => {
   margin-top: -59px;
 } */
 
-.home {
-  padding: 70px;
-}
 
 .hero {
   max-width: 900px;
@@ -150,25 +145,24 @@ onMounted(() => {
 
 .title {
   display: flex;
-  margin: 0 110px 18px;
+  margin: 0 30px 18px;
   font-size: 48px;
   font-weight: 600;
 }
 
 .texte {
   margin: 0 auto;
-  max-width: 700px;
 }
 
 .subtitle {
   text-align: center;
   font-weight: 600;
-  margin: 80px 0 30px;
+  margin: -10px 0px 0px;
   letter-spacing: 0.4px;
 }
 
 .grid {
-  max-width: 800px;
+  max-width: 1500px;
   display: grid;
   place-items: center;
   margin: 0 auto;

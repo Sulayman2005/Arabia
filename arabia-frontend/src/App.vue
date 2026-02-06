@@ -1,7 +1,10 @@
 <script setup>
 import { RouterLink, RouterView, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useCartStore } from "@/stores/cart";
 
+
+const cart = useCartStore();
 const router = useRouter();
 const auth = useAuthStore();
 
@@ -21,7 +24,7 @@ const handleLogout = () => {
       <template v-if="auth.isAuthenticated">
         <RouterLink to="/accueil">Accueil</RouterLink>
         <RouterLink to="/favoris">Favoris</RouterLink>
-        <RouterLink to="/catalogue">Catalogue</RouterLink>
+        <!-- <RouterLink to="/catalogue">Catalogue</RouterLink> -->
         <RouterLink to="/contact">Contact</RouterLink>
         <RouterLink to="/apropos">À propos</RouterLink>
         <RouterLink to="/faq">FAQ</RouterLink>
@@ -29,6 +32,10 @@ const handleLogout = () => {
         <button class="nav-btn" type="button" @click="handleLogout">
           Déconnexion
         </button>
+        <RouterLink to="/panier">
+          <img src="@/assets/panier.png" alt="ajout au panier" width="30px">
+          <span v-if="cart.count > 0">({{ cart.count }})</span>
+        </RouterLink>
       </template>
 
       <template v-else>
@@ -63,7 +70,6 @@ const handleLogout = () => {
   margin-top: auto; 
   display: flex;
   justify-content: end;
-  margin-top: -14em;
 }
 
 .logo_footer img {

@@ -1,12 +1,34 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useProduits } from "@/composables/useProduits";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { useCartStore } from "@/stores/cart";
 
 const route = useRoute();
+const router = useRouter();
+
 const { produits, getProduits } = useProduits();
+const cart = useCartStore();
 
 const produit = ref(null);
+
+// ✅ options
+const contenance = ref("10 ml");
+const applicateur = ref("Roll-on");
+
+const qty = ref(1);
+const maxQty = computed(() => produit.value?.stock ?? 1);
+
+const clampQty = (v) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 1;
+  return Math.min(Math.max(Math.trunc(n), 1), maxQty.value);
+};
+
+const decrement = () => (qty.value = clampQty(qty.value - 1));
+const increment = () => (qty.value = clampQty(qty.value + 1));
+
+watch(qty, (v) => (qty.value = clampQty(v)));
 
 const imgSrc = (image) => {
   if (!image) return "";
@@ -15,10 +37,29 @@ const imgSrc = (image) => {
 
 onMounted(async () => {
   await getProduits();
-
   const id = Number(route.params.id);
   produit.value = produits.value.find((p) => p.id === id) || null;
+
+  // reset
+  qty.value = 1;
+  contenance.value = "10 ml";
+  applicateur.value = "Roll-on";
 });
+
+// ajout panier
+const addToCart = () => {
+  if (!produit.value) return;
+
+  cart.addItem({
+    id: produit.value.id,
+    nom: produit.value.nom,
+    image: produit.value.image,
+    prix: produit.value.prix,
+    contenance: contenance.value,
+    applicateur: applicateur.value,
+    qty: qty.value,
+  });
+};
 </script>
 
 <template>
@@ -64,7 +105,7 @@ onMounted(async () => {
       <div class="info">
         <div class="kicker">Arabia • Collection Musc</div>
 
-        <h1 class="title">MUSC ROYAL</h1>
+        <h1 class="title">{{ produit?.nom }}</h1>
 
         <div class="meta">
           <div class="stars" aria-label="Note 4.8 sur 5">
@@ -83,12 +124,12 @@ onMounted(async () => {
         <div class="buybox">
           <div class="buy-top">
             <div class="price-wrap">
-              <p class="price">19,99 €</p>
+              <p class="price">{{ produit?.prix }} €</p>
               <p class="tax">Taxes incluses</p>
             </div>
 
             <div class="stock">
-              <span class="pill pill-ok">En stock</span>
+              <span class="pill pill-ok">{{ produit?.stock > 0 ? ` ${produit.stock} unités disponibles` : '' }}</span>
               <span class="pill pill-hot">Dernières pièces</span>
             </div>
           </div>
@@ -96,7 +137,7 @@ onMounted(async () => {
           <div class="options">
             <label class="field">
               <span class="label">Contenance</span>
-              <select class="select">
+              <select class="select" v-model="contenance">
                 <option>10 ml</option>
                 <option>6 ml</option>
                 <option>3 ml</option>
@@ -105,25 +146,32 @@ onMounted(async () => {
 
             <label class="field">
               <span class="label">Applicateur</span>
-              <select class="select">
+              <select class="select" v-model="applicateur">
                 <option>Roll-on</option>
                 <option>Spray</option>
               </select>
             </label>
 
-            <label class="field qty">
+            <!-- <label class="field qty">
               <span class="label">Quantité</span>
               <div class="qty-ctrl" role="group" aria-label="Quantité">
                 <button class="qty-btn" type="button" aria-label="Diminuer">−</button>
                 <input class="qty-input" value="1" inputmode="numeric" />
                 <button class="qty-btn" type="button" aria-label="Augmenter">+</button>
               </div>
+            </label> -->
+            <label class="field_qty">
+              <span class="label">Quantité</span>
+              <button class="qty-btn" type="button" aria-label="Diminuer" @click="decrement">−</button>
+              <input class="qty-input" v-model.number="qty" inputmode="numeric" />
+              <button class="qty-btn" type="button" aria-label="Augmenter" @click="increment">+</button>
             </label>
+
           </div>
 
           <div class="cta">
-            <button class="btn btn-primary">Ajouter au panier</button>
-            <button class="btn btn-ghost">Acheter maintenant</button>
+            <button class="btn btn-primary" @click="addToCart">Ajouter au panier</button>
+            <!-- <button class="btn btn-ghost">Acheter maintenant</button> -->
           </div>
 
           <p class="micro">
@@ -145,8 +193,7 @@ onMounted(async () => {
       <div class="panel">
         <h2>Description</h2>
         <p>
-          Musc Royal révèle une sensualité enveloppante : une ouverture lumineuse, un cœur musqué velouté
-          et un fond ambré boisé. Une composition élégante, pensée pour durer.
+          {{ produit?.description }}
         </p>
       </div>
 
@@ -462,7 +509,12 @@ onMounted(async () => {
   .options { grid-template-columns: 1fr; }
 }
 
-.field { display: grid; gap: 8px; }
+.field { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+}
+.field_qty { display: flex; gap: 6px; align-items: start; }
 .label {
   font-size: 12px;
   letter-spacing: 0.08em;
