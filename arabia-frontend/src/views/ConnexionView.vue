@@ -34,8 +34,9 @@ const onSubmit = async () => {
     const token = res.data?.token;
     if (!token) throw new Error("Token manquant dans la réponse");
 
-    // ✅ Pinia devient la source de vérité
-    auth.setAuth(token, { email: email.value.trim() });
+    // Pinia devient la source de vérité
+    // auth.setAuth(token, { email: email.value.trim() });
+    auth.setAuth(token);
 
     if (remember.value) {
       localStorage.setItem("rememberedEmail", email.value.trim());

@@ -12,7 +12,7 @@ const cart = useCartStore();
 
 const produit = ref(null);
 
-// ✅ options
+// options
 const contenance = ref("10 ml");
 const applicateur = ref("Roll-on");
 

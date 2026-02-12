@@ -3,6 +3,8 @@ import { onMounted, ref, computed } from "vue";
 import { useProduits } from "@/composables/useProduits";
 import { RouterLink } from "vue-router";
 import { useFavorisStore } from "@/stores/favoris";
+import api from "@/api/axios";
+import { useAuthStore } from "@/stores/auth";
 
 const { produits, loading, error, getProduits } = useProduits();
 const favorisStore = useFavorisStore();
@@ -19,9 +21,34 @@ const produitsFiltres = computed(() => {
   return produits.value.filter((p) => p.nom?.toLowerCase().includes(q));
 });
 
+// pour accepter les urls externes (ex: https://example.com/image.jpg) ou locales (ex: image.jpg)
 const imgSrc = (image) => {
+  if (!image) return "";
+  if (image.startsWith("http")) return image;
   return new URL(`../assets/${image}`, import.meta.url).href;
 };
+
+// Fonction pour supprimer un produit (exemple de logique, à adapter selon votre API)
+// const removeProduit = (id) => {
+//   // Logique pour supprimer le produit avec l'ID donné
+//   console.log("Supprimer le produit avec l'ID:", id);
+//   // Suppression du produit dans la liste des produits
+//   produits.value = produits.value.filter(p => p.id !== id);
+// };
+
+// Fonction pour supprimer un produit via l'API
+async function deleteproduct(id) {
+  try {
+    await api.delete(`/produits/${id}`);
+    // Supprimer le produit de la liste locale après suppression réussie
+    produits.value = produits.value.filter(p => p.id !== id);
+  } catch (e) {
+    console.error(e);
+    alert("Erreur lors de la suppression du produit.");
+  }
+}
+
+const auth = useAuthStore();
 
 
 onMounted(() => {
@@ -29,7 +56,6 @@ onMounted(() => {
 });
 
 </script>
-
 
 <template>
   <div class="search-container">
@@ -45,7 +71,6 @@ onMounted(() => {
     <section class="hero">
       <h1 class="title">Arabia</h1>
 
-      
       <p class="texte">
         Arabia est une marque de cosmétique et de parfumerie inspirée par l'élégance et la sensualité du musc.
         Elle incarne l'essence des traditions orientales tout en proposant des créations modernes raffinées et minimaliste.
@@ -63,6 +88,15 @@ onMounted(() => {
     
     <section v-if="!loading && !error && produitsFiltres.length" class="grid">
       <article v-for="p in produitsFiltres" :key="p.id" class="card">
+        <div v-if="auth?.isAdmin" @click="deleteproduct(p.id)" class="delete_btn" aria-label="Supprimer le produit">
+          <!-- SVG poubelle -->
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9zm-1 14h12a2 2 0 0 0 2-2V9H4v12a2 2 0 0 0 2 2z"
+            />
+          </svg>
+        </div>
         <RouterLink :to="`/produits/${p.id}`">
           <img class="img" :src="imgSrc(p.image)" :alt="p.nom" />
         </RouterLink>
@@ -81,12 +115,29 @@ onMounted(() => {
 
 
 <style scoped>
+.admin_section {
+  display: grid;
+  place-content: center;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+.delete_btn {
+  top: 8px;
+  right: 8px;
+  border-radius: 50%;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
 .erreur_load {
   text-align: center;
   margin-bottom: 20px;
 }
 
 .search-container {
+  position: relative;
+  z-index: 10;
   margin-left: auto;
   margin-top: -40px;
   margin-bottom: 20px;
@@ -96,6 +147,12 @@ onMounted(() => {
   width: 220px;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
+
+.navigation {
+  position: relative;
+  z-index: 1;
+}
+
 
 .search-container:focus-within {
   border-color: #e3c77a;
@@ -157,12 +214,12 @@ onMounted(() => {
 .subtitle {
   text-align: center;
   font-weight: 600;
-  margin: -10px 0px 0px;
+  margin: -45px 0px 0px;
   letter-spacing: 0.4px;
 }
 
 .grid {
-  max-width: 1500px;
+  max-width: 1700px;
   display: grid;
   place-items: center;
   margin: 0 auto;
@@ -203,4 +260,20 @@ onMounted(() => {
     font-size: 34px;
   }
 }
+
+@media (max-width: 1500px) {
+  .search-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .search-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 </style>

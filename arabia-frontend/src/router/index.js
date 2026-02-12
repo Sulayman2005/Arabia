@@ -11,6 +11,7 @@ import AproposView from "@/views/AproposView.vue";
 import FaqView from "@/views/FaqView.vue";
 import NotFoundView from "@/views/NotFoundView.vue";
 import PanierView from "@/views/PanierView.vue";
+import AjoutProduitView from "@/views/AjoutProduitView.vue";
 
 const routes = [
   { path: "/", redirect: "/connexion" },
@@ -26,6 +27,8 @@ const routes = [
   { path: "/apropos", name: "apropos", component: AproposView, meta: { requiresAuth: true } },
   { path: "/faq", name: "faq", component: FaqView, meta: { requiresAuth: true } },
   {path: "/panier", name: "panier", component: PanierView, meta: { requiresAuth: true } },
+  // {path: "/ajoutproduit/:id", name: "ajoutproduit", component: AjoutProduitView, props: true, meta: { requiresAuth: true } },
+  {path: "/ajoutproduit", name: "ajoutproduit", component: AjoutProduitView, meta: { requiresAuth: true } },
 
   {path: "/:pathMatch(.*)*", name: "NotFound", component: NotFoundView },
 

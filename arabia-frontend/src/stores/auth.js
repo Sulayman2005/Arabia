@@ -12,7 +12,7 @@ function decodeJwt(token) {
 
 function isJwtExpired(token) {
   const decoded = decodeJwt(token);
-  if (!decoded || !decoded.exp) return true; // si on ne peut pas lire exp => on considère invalide
+  if (!decoded || !decoded.exp) return true;
   const nowInSeconds = Math.floor(Date.now() / 1000);
   return decoded.exp < nowInSeconds;
 }
@@ -25,16 +25,23 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isAuthenticated: (state) => !!state.token && !isJwtExpired(state.token),
+    isAdmin: (state) => state.user?.roles?.includes("ROLE_ADMIN") ?? false,
   },
 
   actions: {
     setAuth(token, user = null) {
+      const decoded = decodeJwt(token);
+
+      const finalUser = user ?? {
+        email: decoded?.username || decoded?.email || null,
+        roles: decoded?.roles || [],
+      };
+
       this.token = token;
-      this.user = user;
+      this.user = finalUser;
 
       localStorage.setItem("token", token);
-      if (user) localStorage.setItem("user", JSON.stringify(user));
-      else localStorage.removeItem("user");
+      localStorage.setItem("user", JSON.stringify(finalUser));
     },
 
     logout() {
@@ -44,13 +51,23 @@ export const useAuthStore = defineStore("auth", {
       localStorage.removeItem("user");
     },
 
-    // Appelé au lancement / navigation pour vérifier si token est ok
     checkAuth() {
       if (!this.token) return false;
+
       if (isJwtExpired(this.token)) {
         this.logout();
         return false;
       }
+
+      if (!this.user) {
+        const decoded = decodeJwt(this.token);
+        this.user = {
+          email: decoded?.username || decoded?.email || null,
+          roles: decoded?.roles || [],
+        };
+        localStorage.setItem("user", JSON.stringify(this.user));
+      }
+
       return true;
     },
   },
