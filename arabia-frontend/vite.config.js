@@ -10,6 +10,11 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  test: {
+    globals: true,        // permet d’utiliser les fonctions globales comme "test" ou "expect"
+    environment: 'jsdom', // simulateur DOM
+    setupFiles: './src/test/setup.js' // fichier de configuration si nécessaire
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
