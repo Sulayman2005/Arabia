@@ -48,7 +48,6 @@ jobs:
         working-directory: ./arabia-backend
         run: composer install --no-interaction --prefer-dist --no-scripts
 
-      # Donne les droits à app sur la DB que Doctrine utilise en test
       - name: Grant MySQL privileges for tests
         run: |
           sudo apt-get update
@@ -71,10 +70,11 @@ jobs:
           done
 
           mkdir -p config/jwt/test
-          openssl genpkey -out config/jwt/test/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:test_passphrase
-          openssl pkey -in config/jwt/test/private.pem -passin pass:test_passphrase -out config/jwt/test/public.pem -pubout
+          openssl genrsa -out config/jwt/test/private.pem 4096
+          openssl rsa -in config/jwt/test/private.pem -pubout -out config/jwt/test/public.pem
           chmod 600 config/jwt/test/private.pem
           chmod 644 config/jwt/test/public.pem
+          head -n 1 config/jwt/test/private.pem
 
           php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction || true
           php bin/console doctrine:migrations:migrate --env=test --no-interaction
@@ -86,12 +86,15 @@ jobs:
         env:
           APP_ENV: test
           DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
+          JWT_SECRET_KEY: ${{ github.workspace }}/arabia-backend/config/jwt/test/private.pem
+          JWT_PUBLIC_KEY: ${{ github.workspace }}/arabia-backend/config/jwt/test/public.pem
+          JWT_PASSPHRASE: ""
         run: php bin/phpunit
 
       - name: Install Frontend Dependencies
         working-directory: ./arabia-frontend
         run: npm ci
-      # ajout de --if-present pour éviter d'échouer si le script test n'existe pas
+
       - name: Run Frontend Unit Tests
         working-directory: ./arabia-frontend
         run: npm run test --if-present
@@ -127,3 +130,170 @@ jobs:
             docker image prune -f
             echo "Deployment completed!"
             docker compose ps
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# name: CI/CD arabia Production
+
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+
+#     services:
+#       mysql:
+#         image: mysql:8.0
+#         env:
+#           MYSQL_ROOT_PASSWORD: root
+#           MYSQL_DATABASE: arabia_test
+#           MYSQL_USER: app
+#           MYSQL_PASSWORD: app
+#         ports:
+#           - 3306:3306
+#         options: >-
+#           --health-cmd="mysqladmin ping -h 127.0.0.1 -uapp -papp"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=10
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setup PHP
+#         uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: '8.4'
+#           extensions: pdo_mysql, zip, intl, opcache
+#           coverage: none
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '22'
+#           cache: 'npm'
+#           cache-dependency-path: arabia-frontend/package-lock.json
+
+#       - name: Install Backend Dependencies
+#         working-directory: ./arabia-backend
+#         run: composer install --no-interaction --prefer-dist --no-scripts
+
+#       # Donne les droits à app sur la DB que Doctrine utilise en test
+#       - name: Grant MySQL privileges for tests
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y mysql-client
+#           mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS arabia_test_test;"
+#           mysql -h 127.0.0.1 -uroot -proot -e "GRANT ALL PRIVILEGES ON arabia_test_test.* TO 'app'@'%'; FLUSH PRIVILEGES;"
+#           mysql -h 127.0.0.1 -uroot -proot -e "GRANT ALL PRIVILEGES ON arabia_test.* TO 'app'@'%'; FLUSH PRIVILEGES;"
+
+#       - name: Configure Backend for Tests
+#         working-directory: ./arabia-backend
+#         env:
+#           APP_ENV: test
+#           APP_DEBUG: "1"
+#           DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
+#         run: |
+#           echo "Waiting for MySQL..."
+#           for i in {1..30}; do
+#             (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1 && echo "MySQL is up" && break
+#             sleep 1
+#           done
+
+#           mkdir -p config/jwt/test
+#           openssl genpkey -out config/jwt/test/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:test_passphrase
+#           openssl pkey -in config/jwt/test/private.pem -passin pass:test_passphrase -out config/jwt/test/public.pem -pubout
+#           chmod 600 config/jwt/test/private.pem
+#           chmod 644 config/jwt/test/public.pem
+
+#           php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction || true
+#           php bin/console doctrine:migrations:migrate --env=test --no-interaction
+#           php bin/console doctrine:fixtures:load --no-interaction --env=test
+#           php bin/console cache:clear --env=test
+
+#       - name: Run Backend Tests
+#         working-directory: ./arabia-backend
+#         env:
+#           APP_ENV: test
+#           DATABASE_URL: mysql://app:app@127.0.0.1:3306/arabia_test?serverVersion=8.0&charset=utf8mb4
+#         run: php bin/phpunit
+
+#       - name: Install Frontend Dependencies
+#         working-directory: ./arabia-frontend
+#         run: npm ci
+#       # ajout de --if-present pour éviter d'échouer si le script test n'existe pas
+#       - name: Run Frontend Unit Tests
+#         working-directory: ./arabia-frontend
+#         run: npm run test --if-present
+
+#       - name: Build Frontend
+#         working-directory: ./arabia-frontend
+#         run: npm run build
+
+#   deploy:
+#     needs: test
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+#     steps:
+#       - name: Deploy to Production Server
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_PRIVATE_KEY }}
+#           port: ${{ secrets.SSH_PORT }}
+#           script: |
+#             set -e
+#             cd ${{ secrets.DEPLOY_PATH }}
+#             echo "Pulling latest changes..."
+#             git pull origin main
+#             echo "Building and restarting containers..."
+#             docker compose down
+#             docker compose build --no-cache
+#             docker compose up -d
+#             echo "Waiting for containers..."
+#             sleep 30
+#             docker image prune -f
+#             echo "Deployment completed!"
+#             docker compose ps
