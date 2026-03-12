@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Tests\Api;
 
@@ -14,7 +14,7 @@ final class ProduitSecurityTest extends ApiTestCase
             ],
         ]);
 
-        $this->assertResponseIsSuccessful(); // 200
+        $this->assertResponseIsSuccessful(); 
     }
 
     public function testUserCannotCreateProduit(): void
@@ -25,7 +25,7 @@ final class ProduitSecurityTest extends ApiTestCase
             'headers' => $this->authHeader($token, [
                 'Accept' => 'application/json',
             ]),
-            'json' => [], // on teste la permission, pas la validation
+            'json' => [], 
         ]);
 
         $this->assertResponseStatusCodeSame(403);
@@ -39,9 +39,11 @@ final class ProduitSecurityTest extends ApiTestCase
             'headers' => $this->authHeader($token, [
                 'Accept' => 'application/json',
             ]),
-            'json' => [], // admin autorisé -> 422 attendu
+            'json' => [], 
         ]);
 
         $this->assertResponseStatusCodeSame(422);
     }
+
+
 }
